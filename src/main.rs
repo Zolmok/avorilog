@@ -94,14 +94,14 @@ fn main() {
 
         // from the list of `clientlog` files, find the newest file
         let most_recent = files.iter().reduce(|first, second| {
-            let dte1_str = &first[10..29];
-            let dte1 = match NaiveDateTime::parse_from_str(dte1_str, "%Y-%m-%d %H-%M-%S") {
+            let dte1 = &first[10..29];
+            let dte1 = match NaiveDateTime::parse_from_str(dte1, "%Y-%m-%d %H-%M-%S") {
                 Ok(value) => value,
                 Err(error) => panic!("{}", error)
             };
 
-            let dte2_str = &second[10..29];
-            let dte2 = match NaiveDateTime::parse_from_str(dte2_str, "%Y-%m-%d %H-%M-%S") {
+            let dte2 = &second[10..29];
+            let dte2 = match NaiveDateTime::parse_from_str(dte2, "%Y-%m-%d %H-%M-%S") {
                 Ok(value) => value,
                 Err(error) => panic!("{}", error)
             };
@@ -109,12 +109,12 @@ fn main() {
             if dte1 > dte2 { first } else { second }
         });
 
-        let most_recent_str: String = match most_recent {
+        let most_recent: String = match most_recent {
             None => String::from(""),
             Some(value) => value.to_string()
         };
 
-        let most_recent_path = format!("{}/{}", log_location, most_recent_str);
+        let most_recent_path = format!("{}/{}", log_location, most_recent);
 
         println!("Reading: {}", most_recent_path);
 
