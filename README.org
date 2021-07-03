@@ -1,0 +1,7 @@
+* Avorilog
+
+  The game Avorion (https://www.avorion.net/) currently has no in-game log.
+  Status messages will appear then disappear with no way to get back to them.
+  It writes to a log file in ~/.avorion/ called `clientlog` with an embedded
+  date and time in the name.  Avorilog will open the latest log and extract
+  those log messages from the game and output them to the console.

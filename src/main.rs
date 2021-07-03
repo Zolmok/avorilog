@@ -4,6 +4,7 @@ use std::fs;
 use chrono::{NaiveDateTime};
 
 use notify::{DebouncedEvent, RecommendedWatcher, Watcher, RecursiveMode};
+use std::env;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
@@ -72,9 +73,13 @@ fn watch(watch_path: String) -> notify::Result<()> {
 }
 
 fn main() {
-    const LOG_LOCATION: &str = "/home/hackerzol/.avorion";
+    let home = match env::var("HOME") {
+        Ok(value) => value,
+        Err(_) => panic!("HOME environment variable is not set")
+    };
+    let log_location: &str = &format!("{}/.avorion", home)[..];
 
-    if let Ok(paths) = fs::read_dir(LOG_LOCATION) {
+    if let Ok(paths) = fs::read_dir(log_location) {
         let mut files: Vec<String> = vec![];
 
         for path in paths {
@@ -111,7 +116,7 @@ fn main() {
             Some(value) => value.to_string()
         };
 
-        let most_recent_path = format!("{}/{}", LOG_LOCATION, most_recent_str);
+        let most_recent_path = format!("{}/{}", log_location, most_recent_str);
 
         println!("Reading: {}", most_recent_path);
 
