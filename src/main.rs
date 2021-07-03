@@ -1,23 +1,23 @@
 extern crate notify;
 
-use std::fs;
 use chrono::{NaiveDateTime};
-
 use notify::{DebouncedEvent, RecommendedWatcher, Watcher, RecursiveMode};
 use std::env;
+use std::fs;
 use std::sync::mpsc::channel;
 use std::time::Duration;
 
 fn print_latest_log(log_path: String, line_cnt: i32) -> i32 {
     let contents = match fs::read_to_string(log_path) {
         Ok(value) => value,
-        Err(error) => error.to_string()
+        Err(error) => panic!("{}", error.to_string())
     };
 
     let lines = contents.lines();
     let mut curr_line_cnt = 0;
 
     for line in lines {
+        // don't output lines we've already output, only output the newest lines
         curr_line_cnt = curr_line_cnt + 1;
 
         if line.contains("<>") && curr_line_cnt > line_cnt {
@@ -32,22 +32,18 @@ fn watch(watch_path: String) -> notify::Result<()> {
     // Create a channel to receive the events.
     let (tx, rx) = channel();
 
-    // Automatically select the best implementation for your platform.
-    // You can also access each implementation directly e.g. INotifyWatcher.
     let mut watcher: RecommendedWatcher = match Watcher::new(tx, Duration::from_secs(2)) {
         Ok(value) => value,
         Err(error) => panic!("{}", error)
     };
 
-    // Add a path to be watched. All files and directories at that path and
-    // below will be monitored for changes.
     match watcher.watch(watch_path.clone(), RecursiveMode::Recursive) {
         Ok(value) => value,
         Err(error) => panic!("{}", error)
     };
 
-    // This is a simple loop, but you may want to use more complex logic here,
-    // for example to handle I/O.
+    // maintain a count of all the lines read so we only output the newest lines
+    // probably not the most efficient way to do this but it works
     let mut line_cnt: i32 = 0;
 
     loop {
@@ -82,11 +78,12 @@ fn main() {
     if let Ok(paths) = fs::read_dir(log_location) {
         let mut files: Vec<String> = vec![];
 
+        // collect all files that begin with `clientlog`
         for path in paths {
             if let Ok(path) = path {
                 let file_name = match path.file_name().into_string() {
                     Ok(value) => value,
-                    Err(_) => String::from("")
+                    Err(error) => panic!("{:?}", error)
                 };
 
                 if file_name.starts_with("clientlog") {
@@ -95,6 +92,7 @@ fn main() {
             }
         }
 
+        // from the list of `clientlog` files, find the newest file
         let most_recent = files.iter().reduce(|first, second| {
             let dte1_str = &first[10..29];
             let dte1 = match NaiveDateTime::parse_from_str(dte1_str, "%Y-%m-%d %H-%M-%S") {
@@ -120,9 +118,8 @@ fn main() {
 
         println!("Reading: {}", most_recent_path);
 
-        match watch(most_recent_path) {
-            Ok(value) => value,
-            Err(error) => panic!("{}", error)
-        };
+        if let Err(error) = watch(most_recent_path) {
+            panic!("{}", error);
+        }
     }
 }
